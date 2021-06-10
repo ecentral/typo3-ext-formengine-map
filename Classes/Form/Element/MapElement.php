@@ -2,14 +2,12 @@
 
 namespace CedricZiel\FormEngine\Map\Form\Element;
 
+use CedricZiel\FormEngine\Map\Configuration;
 use CedricZiel\FormEngine\Map\Utility\StaticMaps;
 use TYPO3\CMS\Backend\Form\Element\InputTextElement;
 use TYPO3\CMS\Backend\Form\NodeFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
-use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 
 class MapElement extends InputTextElement
@@ -20,12 +18,19 @@ class MapElement extends InputTextElement
     protected $view;
 
     /**
+     * @var Configuration
+     */
+    private $configuration;
+
+    /**
      * @param NodeFactory $nodeFactory
      * @param array       $data
      */
     public function __construct(NodeFactory $nodeFactory, array $data)
     {
         parent::__construct($nodeFactory, $data);
+
+        $this->configuration = GeneralUtility::makeInstance(Configuration::class);
 
         $this->view = $this->prepareView();
     }
@@ -57,12 +62,12 @@ class MapElement extends InputTextElement
 
         $this->view->assignMultiple(
             [
-                'apiKey'           => StaticMaps::getApiKey(),
+                'apiKey'           => $this->configuration->getApiKey(),
                 'currentValue'     => $currentValue ? $currentValue : [],
                 'currentValueJson' => json_encode($currentValue),
                 'inputAttributes'  => $this->buildInputAttributes($attributes),
                 'parameterArray'   => $parameterArray,
-                'mode'             => $this->getMode(),
+                'mode'             => $this->configuration->getMode(),
                 'staticMapUrl'     => StaticMaps::getStaticMapsUrl($currentValue),
                 'width'            => $width,
             ]
@@ -88,26 +93,6 @@ class MapElement extends InputTextElement
         }
 
         return $attributeString;
-    }
-
-    /**
-     * @return string
-     */
-    protected function getMode()
-    {
-        /** @var ConfigurationUtility $configurationUtility */
-        $configurationUtility = static::getObjectManager()->get(ConfigurationUtility::class);
-        $extensionConfiguration = $configurationUtility->getCurrentConfiguration('formengine_map');
-
-        return $extensionConfiguration['mode']['value'];
-    }
-
-    /**
-     * @return ObjectManagerInterface
-     */
-    protected static function getObjectManager()
-    {
-        return GeneralUtility::makeInstance(ObjectManager::class);
     }
 
     /**
